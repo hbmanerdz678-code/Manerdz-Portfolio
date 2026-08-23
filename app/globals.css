@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+@keyframes profileFloat {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+
+  50% {
+    transform: translateY(-10px) rotate(0.5deg);
+  }
+}
+
+.profile-float {
+  animation: profileFloat 5s ease-in-out infinite;
+}@import "tailwindcss";
+
+@keyframes profileFloat {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+
+  50% {
+    transform: translateY(-10px) rotate(0.5deg);
+  }
+}
+
+.profile-float {
+  animation: profileFloat 5s ease-in-out infinite;
+}
+
+/* Angular / octagon shape */
+.octagon-box {
+  clip-path: polygon(
+    12% 0%,
+    88% 0%,
+    100% 12%,
+    100% 88%,
+    88% 100%,
+    12% 100%,
+    0% 88%,
+    0% 12%
+  );
+}@keyframes profileFloat {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+
+  50% {
+    transform: translateY(-10px) rotate(0.5deg);
+  }
+}
+
+.profile-float {
+  animation: profileFloat 5s ease-in-out infinite;
+}
+
+.octagon-box {
+  clip-path: polygon(
+    12% 0%,
+    88% 0%,
+    100% 12%,
+    100% 88%,
+    88% 100%,
+    12% 100%,
+    0% 88%,
+    0% 12%
+  );
+}
