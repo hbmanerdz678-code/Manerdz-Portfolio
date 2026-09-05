@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 
 const systemSteps = [
   {
@@ -223,7 +224,9 @@ function MagneticButton({
 
 function HeroAssembly() {
   const [mounted, setMounted] = useState(false);
-  const [phase, setPhase] = useState<"scatter" | "circle" | "aligned" | "exit">("scatter");
+  const [phase, setPhase] = useState<
+    "scatter" | "circle" | "aligned" | "exit"
+  >("scatter");
   const leavingRef = useRef(false);
   const timersRef = useRef<number[]>([]);
 
@@ -238,8 +241,8 @@ function HeroAssembly() {
     setPhase("scatter");
 
     timersRef.current.push(
-      window.setTimeout(() => setPhase("circle"), 220),
-      window.setTimeout(() => setPhase("aligned"), 1150)
+      window.setTimeout(() => setPhase("circle"), 140),
+      window.setTimeout(() => setPhase("aligned"), 1050)
     );
   };
 
@@ -251,21 +254,19 @@ function HeroAssembly() {
     setPhase("exit");
 
     timersRef.current.push(
-      window.setTimeout(() => setPhase("scatter"), 720)
+      window.setTimeout(() => setPhase("scatter"), 900)
     );
 
     if (navigateTo) {
       timersRef.current.push(
         window.setTimeout(() => {
           window.location.href = navigateTo;
-        }, 980)
+        }, 1080)
       );
     }
   };
 
   useEffect(() => {
-    // Keep the first render identical on server and client.
-    // The animated letter layout only mounts after hydration.
     setMounted(true);
     startOpening();
 
@@ -298,8 +299,6 @@ function HeroAssembly() {
         return;
       }
 
-      // If the hero is already exiting because the user scrolled away,
-      // do not block the link. Let the browser navigate normally.
       if (leavingRef.current) {
         return;
       }
@@ -337,10 +336,38 @@ function HeroAssembly() {
     >
       <div className="hero-assembly-orbit" aria-hidden="true" />
 
+      <div className="hero-sand-field" aria-hidden="true">
+        {Array.from({ length: 86 }).map((_, index) => {
+          const angle = ((index * 137.5) % 360) * (Math.PI / 180);
+          const radius = 95 + ((index * 47) % 185);
+          const x = Math.cos(angle) * radius;
+          const y = Math.sin(angle) * radius * 0.72;
+          const driftX = ((index * 71) % 260) - 130;
+          const driftY = ((index * 113) % 210) - 105;
+          const size = 1 + ((index * 17) % 3) * 0.45;
+          const delay = (index % 18) * 22;
+
+          return (
+            <span
+              key={`sand-${index}`}
+              className="hero-sand-particle"
+              style={{
+                "--sand-x": `${x}px`,
+                "--sand-y": `${y}px`,
+                "--sand-drift-x": `${driftX}px`,
+                "--sand-drift-y": `${driftY}px`,
+                "--sand-size": `${size}px`,
+                "--sand-delay": `${delay}ms`,
+              } as CSSProperties}
+            />
+          );
+        })}
+      </div>
+
       <div className="hero-orbit-letters" aria-hidden="true">
         {letters.map((char, index) => {
           const angle = (index / letters.length) * Math.PI * 2 - Math.PI / 2;
-          const radius = 142 + (index % 3) * 8;
+          const radius = 138 + (index % 3) * 9;
           const circleX = Math.cos(angle) * radius;
           const circleY = Math.sin(angle) * radius;
           const scatterX = ((index * 83) % 560) - 280;
@@ -353,8 +380,8 @@ function HeroAssembly() {
             "--scatter-x": `${scatterX}px`,
             "--scatter-y": `${scatterY}px`,
             "--scatter-r": `${scatterRotate}deg`,
-            "--letter-delay": `${index * 16}ms`,
-          } as React.CSSProperties;
+            "--letter-delay": `${index * 14}ms`,
+          } as CSSProperties;
 
           return (
             <span
@@ -762,7 +789,7 @@ const heroAssemblyStyles = `
   .hero-assembly {
     position: relative;
     width: 100%;
-    min-height: clamp(270px, 32vw, 430px);
+    min-height: clamp(300px, 34vw, 440px);
     display: flex;
     align-items: center;
     justify-content: flex-start;
@@ -778,39 +805,97 @@ const heroAssemblyStyles = `
     height: min(34vw, 430px);
     min-width: 250px;
     min-height: 250px;
-    border: 1px solid rgba(143, 245, 194, 0.16);
+    border: 1px solid rgba(143, 245, 194, 0.14);
     border-radius: 999px;
-
     transform:
       translate(-50%, -50%)
-      scale(0.25)
-      rotate(-20deg);
-
+      scale(0.72)
+      rotate(-16deg);
     opacity: 0;
-
     transition:
-      transform 1100ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 950ms cubic-bezier(0.22, 1, 0.36, 1),
       opacity 500ms ease;
-
     pointer-events: none;
   }
 
   .hero-assembly-circle .hero-assembly-orbit {
     opacity: 1;
-
     transform:
       translate(-50%, -50%)
       scale(1)
       rotate(0deg);
+    animation: heroOrbitBreath 3.8s ease-in-out infinite;
   }
 
   .hero-assembly-exit .hero-assembly-orbit {
-    opacity: 1;
-
+    opacity: 0.7;
     transform:
       translate(-50%, -50%)
       scale(1.08)
-      rotate(12deg);
+      rotate(18deg);
+    animation: heroOrbitExit 900ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  .hero-sand-field {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0;
+    height: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .hero-sand-particle {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: var(--sand-size);
+    height: var(--sand-size);
+    border-radius: 999px;
+    background: rgba(242, 222, 183, 0.72);
+    box-shadow: 0 0 7px rgba(216, 181, 106, 0.18);
+    opacity: 0;
+    transform:
+      translate3d(
+        var(--sand-x),
+        var(--sand-y),
+        0
+      )
+      scale(0.35);
+    will-change: transform, opacity, filter;
+  }
+
+  .hero-assembly-scatter .hero-sand-particle {
+    opacity: 0.08;
+    animation: heroSandPrepare 850ms ease-out forwards;
+    animation-delay: var(--sand-delay);
+  }
+
+  .hero-assembly-circle .hero-sand-particle {
+    opacity: 0.62;
+    animation: heroSandGather 1150ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation-delay: var(--sand-delay);
+  }
+
+  .hero-assembly-aligned .hero-sand-particle {
+    opacity: 0.06;
+    transform:
+      translate3d(
+        calc(var(--sand-x) * 0.22),
+        calc(var(--sand-y) * 0.22),
+        0
+      )
+      scale(0.3);
+    transition:
+      transform 650ms ease,
+      opacity 650ms ease;
+  }
+
+  .hero-assembly-exit .hero-sand-particle {
+    opacity: 0;
+    animation: heroSandExit 900ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation-delay: var(--sand-delay);
   }
 
   .hero-orbit-letters {
@@ -826,16 +911,18 @@ const heroAssemblyStyles = `
     position: absolute;
     left: 0;
     top: 0;
-
     display: inline-block;
-
-    font-size: clamp(2.2rem, 5vw, 5rem);
-    font-weight: 900;
+    font-family:
+      "Avenir Next",
+      "Nunito Sans",
+      "Trebuchet MS",
+      system-ui,
+      sans-serif;
+    font-size: clamp(2rem, 4.4vw, 4.35rem);
+    font-weight: 700;
     line-height: 1;
-    letter-spacing: -0.075em;
-
+    letter-spacing: -0.045em;
     color: #f2f6f1;
-
     transform:
       translate3d(
         var(--scatter-x),
@@ -844,20 +931,14 @@ const heroAssemblyStyles = `
       )
       rotate(var(--scatter-r))
       scale(0.72);
-
-    opacity: 1;
-
-    filter: blur(4px);
-
+    opacity: 0.02;
+    filter: blur(5px);
     transform-origin: center;
-
     transition:
-      transform 1000ms cubic-bezier(0.16, 1, 0.3, 1),
-      opacity 500ms ease,
-      filter 700ms ease;
-
+      transform 920ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 650ms ease,
+      filter 720ms ease;
     transition-delay: var(--letter-delay);
-
     will-change: transform, opacity, filter;
   }
 
@@ -873,10 +954,6 @@ const heroAssemblyStyles = `
     color: #8ff5c2;
   }
 
-  /*
-   * PHASE 2
-   * Letters rapidly converge into the orbit.
-   */
   .hero-assembly-circle .hero-orbit-letter {
     transform:
       translate3d(
@@ -884,19 +961,12 @@ const heroAssemblyStyles = `
         var(--circle-y),
         0
       )
-      rotate(180deg)
+      rotate(0deg)
       scale(0.82);
-
-    opacity: 0.92;
-
-    filter: blur(0.5px);
+    opacity: 0.9;
+    filter: blur(0.8px);
   }
 
-  /*
-   * PHASE 3
-   * The orbit briefly holds while the final
-   * typography prepares to appear.
-   */
   .hero-assembly-aligned .hero-orbit-letter {
     transform:
       translate3d(
@@ -904,74 +974,58 @@ const heroAssemblyStyles = `
         var(--circle-y),
         0
       )
-      rotate(180deg)
-      scale(0.88);
-
+      rotate(0deg)
+      scale(0.86);
     opacity: 0;
-
-    filter: blur(5px);
-
+    filter: blur(4px);
     transition:
-      transform 450ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 420ms ease,
       opacity 420ms ease,
-      filter 450ms ease;
-
+      filter 420ms ease;
     transition-delay: 0ms;
   }
 
-  /*
-   * EXIT
-   * The letters expand away from the center
-   * instead of simply disappearing.
-   */
   .hero-assembly-exit .hero-orbit-letter {
     transform:
       translate3d(
-        calc(var(--circle-x) * 1.28),
-        calc(var(--circle-y) * 1.28),
+        calc(var(--circle-x) * 1.42),
+        calc(var(--circle-y) * 1.42),
         0
       )
-      rotate(220deg)
-      scale(0.72);
-
+      rotate(28deg)
+      scale(0.68);
     opacity: 0;
-
     filter: blur(5px);
-
     transition:
-      transform 650ms cubic-bezier(0.76, 0, 0.24, 1),
-      opacity 350ms ease,
-      filter 400ms ease;
-
+      transform 900ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 650ms ease,
+      filter 700ms ease;
     transition-delay: 0ms;
   }
 
   .hero-final-title {
     position: relative;
     z-index: 3;
-
     width: 100%;
-
-    font-size: clamp(4rem, 9vw, 9rem);
-    font-weight: 900;
-    line-height: 0.82;
-    letter-spacing: -0.075em;
-
+    max-width: 920px;
+    font-family:
+      "Avenir Next",
+      "Nunito Sans",
+      "Trebuchet MS",
+      system-ui,
+      sans-serif;
+    font-size: clamp(3.6rem, 7vw, 7rem);
+    font-weight: 700;
+    line-height: 0.88;
+    letter-spacing: -0.055em;
     color: #f2f6f1;
-
     opacity: 0;
-
-    transform:
-      translateY(28px)
-      scale(0.96);
-
-    filter: blur(10px);
-
+    transform: translateY(18px) scale(0.985);
+    filter: blur(8px);
     transition:
-      opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
-      transform 950ms cubic-bezier(0.16, 1, 0.3, 1),
-      filter 800ms ease;
-
+      opacity 600ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 700ms cubic-bezier(0.22, 1, 0.36, 1),
+      filter 650ms ease;
     pointer-events: none;
   }
 
@@ -979,56 +1033,155 @@ const heroAssemblyStyles = `
     color: #8ff5c2;
   }
 
-  /*
-   * Final title arrives with a slight overshoot.
-   */
   .hero-assembly-aligned .hero-final-title {
-  opacity: 1;
-  transform: translateY(0) scale(1.015);
-  filter: blur(0);
-
-  transition:
-    opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 950ms cubic-bezier(0.16, 1, 0.3, 1),
-    filter 800ms ease;
-
- animation: heroTitleSettle 1200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes heroTitleSettle {
-  0% {
-    transform: translateY(18px) scale(0.97);
-    filter: blur(6px);
-  }
-
-  58% {
-  transform: translateY(-5px) scale(1.035);
-  filter: blur(0);
-}
-  }
-
-  100% {
+    opacity: 1;
     transform: translateY(0) scale(1);
     filter: blur(0);
+    animation: heroTitleSettle 720ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
   }
-}
 
-  /*
-   * Exit title moves upward and fades.
-   */
   .hero-assembly-exit .hero-final-title {
     opacity: 0;
-
-    transform:
-      translateY(-22px)
-      scale(0.98);
-
-    filter: blur(8px);
-
+    transform: translateY(-10px) scale(0.985);
+    filter: blur(6px);
     transition:
-      opacity 350ms ease,
-      transform 500ms cubic-bezier(0.76, 0, 0.24, 1),
-      filter 400ms ease;
+      opacity 500ms ease,
+      transform 650ms cubic-bezier(0.22, 1, 0.36, 1),
+      filter 550ms ease;
+  }
+
+  @keyframes heroOrbitBreath {
+    0%, 100% {
+      transform:
+        translate(-50%, -50%)
+        scale(1)
+        rotate(0deg);
+    }
+    50% {
+      transform:
+        translate(-50%, -50%)
+        scale(1.018)
+        rotate(2deg);
+    }
+  }
+
+  @keyframes heroOrbitExit {
+    0% {
+      transform:
+        translate(-50%, -50%)
+        scale(1)
+        rotate(0deg);
+    }
+    100% {
+      transform:
+        translate(-50%, -50%)
+        scale(1.12)
+        rotate(16deg);
+    }
+  }
+
+  @keyframes heroSandPrepare {
+    0% {
+      opacity: 0;
+      transform:
+        translate3d(
+          calc(var(--sand-x) * 1.35),
+          calc(var(--sand-y) * 1.35),
+          0
+        )
+        scale(0.2);
+      filter: blur(2px);
+    }
+    45% {
+      opacity: 0.45;
+    }
+    100% {
+      opacity: 0.16;
+      transform:
+        translate3d(
+          var(--sand-x),
+          var(--sand-y),
+          0
+        )
+        scale(0.75);
+      filter: blur(0.3px);
+    }
+  }
+
+  @keyframes heroSandGather {
+    0% {
+      opacity: 0.16;
+      transform:
+        translate3d(
+          var(--sand-x),
+          var(--sand-y),
+          0
+        )
+        scale(0.7);
+    }
+    45% {
+      opacity: 0.72;
+      transform:
+        translate3d(
+          calc(var(--sand-x) * 0.72),
+          calc(var(--sand-y) * 0.72),
+          0
+        )
+        scale(1);
+    }
+    100% {
+      opacity: 0.1;
+      transform:
+        translate3d(
+          calc(var(--sand-x) * 0.26),
+          calc(var(--sand-y) * 0.26),
+          0
+        )
+        scale(0.35);
+    }
+  }
+
+  @keyframes heroSandExit {
+    0% {
+      opacity: 0.08;
+      transform:
+        translate3d(
+          calc(var(--sand-x) * 0.2),
+          calc(var(--sand-y) * 0.2),
+          0
+        )
+        scale(0.3);
+      filter: blur(0);
+    }
+    35% {
+      opacity: 0.72;
+    }
+    100% {
+      opacity: 0;
+      transform:
+        translate3d(
+          calc(var(--sand-x) + var(--sand-drift-x)),
+          calc(var(--sand-y) + var(--sand-drift-y)),
+          0
+        )
+        scale(0.15);
+      filter: blur(2px);
+    }
+  }
+
+  @keyframes heroTitleSettle {
+    0% {
+      transform: translateY(12px) scale(0.985);
+      filter: blur(5px);
+    }
+    65% {
+      transform: translateY(-2px) scale(1.008);
+      filter: blur(0);
+    }
+    100% {
+      transform: translateY(0) scale(1);
+      filter: blur(0);
+    }
   }
 
   @media (max-width: 767px) {
@@ -1044,20 +1197,10 @@ const heroAssemblyStyles = `
     }
 
     .hero-orbit-letter {
-      font-size: clamp(1.75rem, 8vw, 3rem);
+      font-size: clamp(1.55rem, 7vw, 2.65rem);
     }
 
-    .hero-assembly-circle .hero-orbit-letter {
-      transform:
-        translate3d(
-          calc(var(--circle-x) * 0.72),
-          calc(var(--circle-y) * 0.72),
-          0
-        )
-        rotate(180deg)
-        scale(0.78);
-    }
-
+    .hero-assembly-circle .hero-orbit-letter,
     .hero-assembly-aligned .hero-orbit-letter {
       transform:
         translate3d(
@@ -1065,8 +1208,8 @@ const heroAssemblyStyles = `
           calc(var(--circle-y) * 0.72),
           0
         )
-        rotate(180deg)
-        scale(0.84);
+        rotate(0deg)
+        scale(0.78);
     }
 
     .hero-assembly-exit .hero-orbit-letter {
@@ -1076,22 +1219,35 @@ const heroAssemblyStyles = `
           calc(var(--circle-y) * 0.92),
           0
         )
-        rotate(220deg)
-        scale(0.72);
+        rotate(28deg)
+        scale(0.66);
     }
 
     .hero-final-title {
-      font-size: clamp(3.35rem, 15vw, 5.5rem);
-      line-height: 0.86;
-      letter-spacing: -0.07em;
+      max-width: 650px;
+      font-size: clamp(3rem, 13vw, 5rem);
+      line-height: 0.88;
+      letter-spacing: -0.055em;
+    }
+
+    .hero-sand-particle {
+      box-shadow: none;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .hero-orbit-letter,
     .hero-assembly-orbit,
+    .hero-sand-particle,
     .hero-final-title {
+      animation: none !important;
       transition: none !important;
+    }
+
+    .hero-final-title {
+      opacity: 1 !important;
+      transform: none !important;
+      filter: none !important;
     }
   }
 `;
